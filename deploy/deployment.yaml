@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitops-demo-app
+  namespace: default
+  labels:
+    app: gitops-demo
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gitops-demo
+  template:
+    metadata:
+      labels:
+        app: gitops-demo
+        version: v1
+    spec:
+      containers:
+      - name: gitops-demo
+        image: PLACEHOLDER_ECR_URI:latest
+        ports:
+        - containerPort: 80
+          name: http
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: APP_VERSION
+          value: "1.0.0"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5

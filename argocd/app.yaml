@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: my-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/soodrajesh/gitops-project-1.git'
+    targetRevision: HEAD
+    path: deploy
+  destination:
+    server: 'https://kubernetes.default.svc' #replace with eks cluster endpoint
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
