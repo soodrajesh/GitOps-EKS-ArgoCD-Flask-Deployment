@@ -1,5 +1,7 @@
 # EKS GitOps Deployment with ArgoCD
 
+[![CI](https://github.com/soodrajesh/GitOps-EKS-ArgoCD-Flask-Deployment/actions/workflows/ci.yml/badge.svg)](https://github.com/soodrajesh/GitOps-EKS-ArgoCD-Flask-Deployment/actions/workflows/ci.yml)
+
 A small Flask app deployed to EKS the GitOps way: Terraform provisions the cluster and
 registry, ArgoCD watches the `deploy/` manifests in this repo and reconciles the cluster
 to match. The app itself is intentionally trivial (a health check and a couple of JSON
@@ -30,9 +32,12 @@ there's no chart here, just a Deployment, Service, and Ingress). `syncPolicy.aut
 is set with `prune` and `selfHeal`, so ArgoCD both applies new commits and reverts
 manual `kubectl` changes that drift from what's in git.
 
-What this doesn't have: a CI pipeline. There's no GitHub Actions workflow in this repo,
-so building and pushing the image to ECR is a manual step (see commands below) before
-ArgoCD can deploy it. Wiring that up would be the natural next piece.
+CI runs on every push: pytest and flake8 against the app, `terraform fmt`/`validate`
+against the infra, and a checkov scan (soft-fail — it surfaces real findings like the
+public EKS endpoint and permissive security groups without blocking on hardening that's
+out of scope here). What CI doesn't do is build or push the image to ECR, or trigger a
+deploy — that's still a manual step (see commands below) before ArgoCD picks it up.
+Wiring the build/push into CI would be the natural next piece.
 
 ## Project structure
 
@@ -87,7 +92,11 @@ pytest test_app.py -v
 
 ## Known gaps
 
-- No CI/CD pipeline — image build/push is manual, described above.
+- CI lints/tests the app and validates the Terraform, but doesn't build/push the
+  image or trigger a deploy — that's still manual, described above.
+- Checkov findings (public EKS endpoint, permissive security group egress, no VPC
+  flow logs, no KMS key policy) are surfaced in CI but not fixed — hardening these
+  is reasonable next work, deliberately left out of this pass.
 - Single environment only; there's no per-environment Terraform workspace or
   overlay, so running this for more than a demo would need that split out.
 - The ingress host and image URI are placeholders that need to be filled in per
