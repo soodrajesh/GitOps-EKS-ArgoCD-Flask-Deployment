@@ -79,7 +79,7 @@ resource "aws_security_group" "eks_cluster" {
 # IAM Role for EKS Cluster
 resource "aws_iam_role" "eks_role" {
   name = "${local.name_prefix}-cluster-role"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -116,15 +116,15 @@ resource "aws_launch_template" "eks_nodes" {
   name_prefix   = "${local.name_prefix}-nodes-"
   image_id      = data.aws_ami.eks_worker.id
   instance_type = var.node_group_instance_types[0]
-  
+
   vpc_security_group_ids = [aws_security_group.eks_nodes.id]
-  
+
   user_data = base64encode(templatefile("${path.module}/userdata.sh", {
-    cluster_name        = aws_eks_cluster.this.name
-    cluster_endpoint    = aws_eks_cluster.this.endpoint
-    cluster_ca          = aws_eks_cluster.this.certificate_authority[0].data
+    cluster_name     = aws_eks_cluster.this.name
+    cluster_endpoint = aws_eks_cluster.this.endpoint
+    cluster_ca       = aws_eks_cluster.this.certificate_authority[0].data
   }))
-  
+
   block_device_mappings {
     device_name = "/dev/xvda"
     ebs {
@@ -137,25 +137,25 @@ resource "aws_launch_template" "eks_nodes" {
       delete_on_termination = true
     }
   }
-  
+
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
     http_put_response_hop_limit = 2
     instance_metadata_tags      = "enabled"
   }
-  
+
   monitoring {
     enabled = true
   }
-  
+
   tag_specifications {
     resource_type = "instance"
     tags = merge(local.common_tags, {
       Name = "${local.name_prefix}-node"
     })
   }
-  
+
   lifecycle {
     create_before_destroy = true
   }
@@ -176,10 +176,10 @@ resource "aws_security_group" "eks_nodes" {
   }
 
   ingress {
-    from_port = 0
-    to_port   = 65535
-    protocol  = "tcp"
-    self      = true
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    self        = true
     description = "Allow nodes to communicate with each other"
   }
 
@@ -230,7 +230,7 @@ resource "aws_eks_node_group" "this" {
   instance_types = var.node_group_instance_types
   capacity_type  = var.node_group_capacity_type
   disk_size      = 50
-  
+
   launch_template {
     id      = aws_launch_template.eks_nodes.id
     version = aws_launch_template.eks_nodes.latest_version

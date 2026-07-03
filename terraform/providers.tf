@@ -11,15 +11,17 @@ resource "random_string" "suffix" {
 }
 
 locals {
-  # Common tags applied to all resources
+  # Common tags applied to all resources.
+  # Deliberately static: putting data-source values (caller identity, region) here
+  # creates a provider/default_tags dependency cycle, since default_tags is evaluated
+  # as part of configuring the provider, before any data source using that provider
+  # can be read.
   common_tags = {
     Project     = var.project_name
     Environment = var.environment
     ManagedBy   = "Terraform"
-    CreatedBy   = data.aws_caller_identity.current.user_id
-    Region      = data.aws_region.current.name
   }
-  
+
   # Naming convention with random suffix to avoid conflicts
   name_prefix = "${var.project_name}-${var.environment}-${random_string.suffix.result}"
 }
@@ -27,7 +29,7 @@ locals {
 provider "aws" {
   region  = var.aws_region
   profile = "raj-private"
-  
+
   default_tags {
     tags = local.common_tags
   }

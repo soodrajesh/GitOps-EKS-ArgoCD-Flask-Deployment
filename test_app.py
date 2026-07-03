@@ -27,7 +27,7 @@ def test_health_check(client):
     """Test the health check endpoint."""
     response = client.get('/health')
     assert response.status_code == 200
-    
+
     data = json.loads(response.data)
     assert data['status'] == 'healthy'
     assert 'timestamp' in data
@@ -38,7 +38,7 @@ def test_app_info(client):
     """Test the application info endpoint."""
     response = client.get('/api/info')
     assert response.status_code == 200
-    
+
     data = json.loads(response.data)
     assert data['name'] == 'GitOps Demo Application'
     assert 'version' in data
@@ -51,7 +51,7 @@ def test_metrics(client):
     """Test the metrics endpoint."""
     response = client.get('/api/metrics')
     assert response.status_code == 200
-    
+
     data = json.loads(response.data)
     assert 'uptime_seconds' in data
     assert 'environment' in data
@@ -63,7 +63,7 @@ def test_not_found(client):
     """Test 404 error handling."""
     response = client.get('/nonexistent-endpoint')
     assert response.status_code == 404
-    
+
     data = json.loads(response.data)
     assert data['error'] == 'Not found'
 
@@ -77,7 +77,7 @@ def test_health_check_content_type(client):
 def test_api_endpoints_return_json(client):
     """Test that all API endpoints return JSON."""
     endpoints = ['/api/info', '/api/metrics', '/health']
-    
+
     for endpoint in endpoints:
         response = client.get(endpoint)
         assert response.content_type == 'application/json'

@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt pytest flake8
+      - run: flake8 app.py test_app.py --max-line-length=120
+      - run: pytest test_app.py -v
+
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false
+      - run: terraform validate
+
+  checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install checkov
+      # --soft-fail: this is a demo repo with known, documented tradeoffs (public
+      # EKS endpoint, permissive security groups, no VPC flow logs -- see the
+      # README's Known gaps section). The point of this job is to surface real
+      # findings in the log, not to block on hardening that's out of scope here.
+      - run: checkov -d terraform --compact --quiet --soft-fail
